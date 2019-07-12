@@ -2,39 +2,97 @@
 (tool-bar-mode 0)
 
 (setq column-number-mode t)
+(setq-default indent-tabs-mode nil)
+
+(setq exec-path (append exec-path '("/usr/local/bin")))
 
 ;; Proxy
 (setq url-proxy-services
-      '(("no_proxy" . "^\\(localhost\\|10.*\\)")
-	("http" . "localhost:8080")
-	("https" . "localhost:8080")))
+      '(("no_proxy" . "^\\(localhost\\|10\\..*\\|127\\..*\\)")
+	("http" . "nwsUSmeri9888-zscaler-comm.utccgl.com:80")
+	("https" . "nwsUSmeri9888-zscaler-comm.utccgl.com:80")))
 
 ;; Packages
 (require 'package)
-;(add-to-list 'package-archives
-;	     '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives
-	     '("melpa-stable" . "https://stable.melpa.org/packages/"))
-;(add-to-list 'package-archives
-;	     '("marmalade" . "http://marmalade-repo.org/packages/"))
-
+	     '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
 
 					; Theme
-(load-theme 'afternoon t)
-(set-default-font "Consolas-14")
+(load-theme 'exotica t)
+(set-default-font "Consolas-16")
 
-;; SLIME
-;(setq inferior-lisp-program "/usr/local/bin/sbcl")
-;(load (expand-file-name "~/.local/opt/quicklisp/slime-helper.el"))
+;;; Paths
+(require 'exec-path-from-shell)
+(exec-path-from-shell-initialize)
 
+;;
+;; EVIL
+;;
+(require 'evil)
+(evil-mode 1)
+
+;;;
+;;; Programming now
+;;;
+(require 'flycheck)
+(add-hook 'after-init-hook #'global-flycheck-mode)
+
+;;
+;; Javascript
+;;
+(require 'js2-mode)
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+(add-hook 'js2-mode-hook #'js2-imenu-extras-mode)
+(require 'js2-refactor)
+(add-hook 'js2-mode-hook #'js2-refactor-mode)
+; Use eslint instead of jshint
+(setq-default flycheck-disabled-checkers
+  (append flycheck-disabled-checkers
+    '(javascript-jshint json-jsonlist)))
+
+;; js-mode (which js2 is based on) binds "M-." which conflicts with xref, so
+;; unbind it.
+(define-key js-mode-map (kbd "M-.") nil)
+;; This command is very similar to killing in paredit: It kills up to the end of the line,
+;; but always keeping the AST valid.
+(define-key js2-mode-map (kbd "C-k") #'js2r-kill)
+
+;; For company-tern
+(require 'company)
+(require 'company-tern)
+
+(add-to-list 'company-backends 'company-tern)
+(add-hook 'js2-mode-hook (lambda ()
+                           (tern-mode)
+                           (company-mode)))
+                           
+;; Disable completion keybindings, as we use xref-js2 instead
+(define-key tern-mode-keymap (kbd "M-.") nil)
+(define-key tern-mode-keymap (kbd "M-,") nil)
+
+(require 'indium)
+(add-hook 'js2-mode-hook #'indium-interaction-mode)
+
+;; After js2 has parsed a js file, we look for jslint globals decl comment ("/* global Fred, _, Harry */") and
+;; add any symbols to a buffer-local var of acceptable global vars
+;; Note that we also support the "symbol: true" way of specifying names via a hack (remove any ":true"
+;; to make it look like a plain decl, and any ':false' are left behind so they'll effectively be ignored as
+;; you can;t have a symbol called "someName:false"
+(add-hook 'js2-post-parse-callbacks
+	    (lambda ()
+	    (when (> (buffer-size) 0)
+		(let ((btext (replace-regexp-in-string
+			    ": *true" " "
+			    (replace-regexp-in-string "[\n\t ]+" " " (buffer-substring-no-properties 1 (buffer-size)) t t))))
+		(mapc (apply-partially 'add-to-list 'js2-additional-externs)
+			(split-string
+			(if (string-match "/\\* *global *\\(.*?\\) *\\*/" btext) (match-string-no-properties 1 btext) "")
+			" *, *" t))
+		))))
 ;;
 ;; Clojure
 ;;
-	; smartparens
-;(require 'smartparens)
-;(sp-pair "'" nil :actions :rem)
-
 					; clojure-mode
 (require 'clojure-mode)
 (add-hook 'clojure-mode-hook #'cider-mode)
@@ -42,23 +100,56 @@
 					; cider
 (require 'cider)
 (add-hook 'cider-mode-hook #'eldoc-mode)
-;(add-hook 'cider-repl-mode-hook #'smartparens-strict-mode)
 (add-to-list 'same-window-buffer-names "<em>nrepl</em>")
 (eval-after-load "cider"
   '(define-key cider-mode-map (kbd "C-c C-d") 'ac-nrepl-popup-doc)) ; C-c C-d to show doc
 (setq nrepl-hide-special-buffers t)
 (setq cider-lein-command "/Users/bholm1/bin/lein")
+; (setq cljr-inject-dependencies-at-jack-in nil)
 					; misc
+(require 'rainbow-delimiters)
 (show-paren-mode 1)
-(rainbow-mode)
+
+(setq cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))")
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ansi-color-faces-vector
+   [default bold shadow italic underline bold bold-italic bold])
+ '(ansi-color-names-vector
+   (vector "#eaeaea" "#d54e53" "DarkOliveGreen3" "#e7c547" "DeepSkyBlue1" "#c397d8" "#70c0b1" "#181a26"))
+ '(custom-safe-themes
+   (quote
+    ("0bff60fb779498e69ea705825a2ca1a5497a4fccef93bf3275705c2d27528f2f" "4980e5ddaae985e4bae004280bd343721271ebb28f22b3e3b2427443e748cd3f" "28ec8ccf6190f6a73812df9bc91df54ce1d6132f18b4c8fcc85d45298569eb53" default)))
+ '(fci-rule-color "#14151E")
  '(package-selected-packages
    (quote
-    (clj-refactor cider clojure-mode rainbow-mode afternoon-theme))))
+    (json-mode flycheck-clojure flycheck flymake-eslint company-tern exec-path-from-shell exotica-theme js-auto-format-mode js-comint js-format eslint-fix js2-refactor npm-mode nodejs-repl a markdown-mode markdown-toc easy-hugo erlang indium darkroom olivetti tabula-rasa writeroom-mode noctilux-theme rainbow-delimiters rainbow-identifiers evil evil-commentary evil-matchit evil-nerd-commenter evil-numbers evil-search-highlight-persist evil-surround clj-refactor cider clojure-mode afternoon-theme)))
+ '(vc-annotate-background nil)
+ '(vc-annotate-color-map
+   (quote
+    ((20 . "#d54e53")
+     (40 . "goldenrod")
+     (60 . "#e7c547")
+     (80 . "DarkOliveGreen3")
+     (100 . "#70c0b1")
+     (120 . "DeepSkyBlue1")
+     (140 . "#c397d8")
+     (160 . "#d54e53")
+     (180 . "goldenrod")
+     (200 . "#e7c547")
+     (220 . "DarkOliveGreen3")
+     (240 . "#70c0b1")
+     (260 . "DeepSkyBlue1")
+     (280 . "#c397d8")
+     (300 . "#d54e53")
+     (320 . "goldenrod")
+     (340 . "#e7c547")
+     (360 . "DarkOliveGreen3"))))
+ '(vc-annotate-very-old-color nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
