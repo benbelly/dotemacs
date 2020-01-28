@@ -28,6 +28,15 @@
 ;;;
 (require 'basic-edit-toolkit)
 
+;;;
+;;; Programming
+;;;
+(require 'editorconfig)
+(editorconfig-mode 1)
+
+(require 'flycheck)
+(add-hook 'after-init-hook #'global-flycheck-mode)
+
 ;;
 ;; EVIL
 ;;
@@ -65,6 +74,7 @@
   "."  'evilnc-copy-and-comment-operator
   "\\" 'evilnc-comment-operator ; if you prefer backslash key
   "e" 'pp-eval-last-sexp
+  "f" 'flyspell-buffer
   "k" 'kill-buffer
   "w" (kbd ": % s / \\ s \\ + $ / / RET"))
 
@@ -87,16 +97,6 @@
     'utf-16-le  ;; https://rufflewind.com/2014-07-20/pasting-unicode-in-emacs-on-windows
     'utf-8))
 (prefer-coding-system 'utf-8)
-
-;;;
-;;; Programming
-;;;
-(require 'editorconfig)
-(editorconfig-mode 1)
-
-(require 'flycheck)
-(add-hook 'after-init-hook #'global-flycheck-mode)
-
 ;;
 ;; Javascript
 ;;
