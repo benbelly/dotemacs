@@ -13,37 +13,52 @@
 	     '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
 
+(defvar my-packages '(exotica-theme
+                      exec-path-from-shell
+                      better-defaults
+                      editorconfig
+                      flycheck
+                      powershell
+                      evil
+                      evil-leader
+                      js2-mode
+                      js2-refactor
+                      indium
+                      projectile
+                      clojure-mode
+                      which-key
+                      cider
+                      rainbow-delimiters))
+(dolist (p my-packages)
+  (unless (package-installed-p p)
+    (package-install p)))
+(dolist (p my-packages) (require p))
+                      
 					; Theme
 (load-theme 'exotica t)
 (set-frame-font "Consolas-16")
 
 ;;; Paths
 (add-to-list 'load-path (expand-file-name "~/dotemacs/elisp"))
-(require 'exec-path-from-shell)
 (setq exec-path-from-shell-check-startup-files nil)
 (exec-path-from-shell-initialize)
 
 ;;;
-;;; Editing Functions
-;;;
-(require 'basic-edit-toolkit)
-
-;;;
 ;;; Programming
 ;;;
-(require 'editorconfig)
 (editorconfig-mode 1)
 
-(require 'flycheck)
 (add-hook 'after-init-hook #'global-flycheck-mode)
+
+;;;
+;;; Powershell
+;;;
 
 ;;
 ;; EVIL
 ;;
-(require 'evil)
 (evil-mode 1)
 
-(require 'evil-leader)
 (global-evil-leader-mode)
 (evil-leader/set-leader ",")
 
@@ -100,10 +115,8 @@
 ;;
 ;; Javascript
 ;;
-(require 'js2-mode)
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-hook 'js2-mode-hook #'js2-imenu-extras-mode)
-(require 'js2-refactor)
 (add-hook 'js2-mode-hook #'js2-refactor-mode)
 ; Use eslint instead of jshint
 (setq-default flycheck-disabled-checkers
@@ -117,7 +130,6 @@
 ;; but always keeping the AST valid.
 (define-key js2-mode-map (kbd "C-k") #'js2r-kill)
 
-(require 'indium)
 (add-hook 'js2-mode-hook #'indium-interaction-mode)
 
 ;; After js2 has parsed a js file, we look for jslint globals decl comment ("/* global Fred, _, Harry */") and
@@ -140,22 +152,18 @@
 ;; Clojure
 ;;
 					; clojure-mode
-(require 'clojure-mode)
-(require 'which-key)
 (add-hook 'clojure-mode-hook #'cider-mode)
 (add-hook 'clojure-mode-hook #'turn-on-eldoc-mode)
 (add-hook 'clojure-mode-hook #'which-key-mode)
 					; cider
-(require 'cider)
 (add-hook 'cider-mode-hook #'eldoc-mode)
 (add-to-list 'same-window-buffer-names "<em>nrepl</em>")
 (eval-after-load "cider"
   '(define-key cider-mode-map (kbd "C-c C-d") 'ac-nrepl-popup-doc)) ; C-c C-d to show doc
 (setq nrepl-hide-special-buffers t)
-(setq cider-lein-command "/Users/bholm1/bin/lein")
+(setq cider-lein-command "/usr/local/bin/lein")
 ; (setq cljr-inject-dependencies-at-jack-in nil)
 					; misc
-(require 'rainbow-delimiters)
 (show-paren-mode 1)
 
 (setq cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))")
@@ -175,7 +183,7 @@
  '(fci-rule-color "#14151E")
  '(package-selected-packages
    (quote
-    (move-text evil-better-visual-line evil-leader editorconfig editorconfig-custom-majormode editorconfig-domain-specific editorconfig-generate which-key json-mode flycheck-clojure flycheck flymake-eslint company-tern exec-path-from-shell exotica-theme js-auto-format-mode js-comint js-format eslint-fix js2-refactor npm-mode nodejs-repl a markdown-mode markdown-toc erlang indium olivetti noctilux-theme rainbow-delimiters rainbow-identifiers evil evil-matchit evil-nerd-commenter evil-numbers evil-search-highlight-persist evil-surround clj-refactor cider clojure-mode afternoon-theme)))
+    (better-defaults projectile projectile-codesearch powershell move-text evil-better-visual-line evil-leader editorconfig editorconfig-custom-majormode editorconfig-domain-specific editorconfig-generate which-key json-mode flycheck-clojure flycheck flymake-eslint company-tern exec-path-from-shell exotica-theme js-auto-format-mode js-comint js-format eslint-fix js2-refactor npm-mode nodejs-repl a markdown-mode markdown-toc erlang indium olivetti noctilux-theme rainbow-delimiters rainbow-identifiers evil evil-matchit evil-nerd-commenter evil-numbers evil-search-highlight-persist evil-surround clj-refactor cider clojure-mode afternoon-theme)))
  '(vc-annotate-background nil)
  '(vc-annotate-color-map
    (quote
